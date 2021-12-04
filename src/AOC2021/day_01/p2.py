@@ -1,4 +1,5 @@
-from itertools import count, tee, pairwise as pw
+from typing import Iterable
+from itertools import tee, pairwise
 from pathlib import Path
 
 input_data = Path(__file__).parent / Path("./p1_input")
@@ -11,7 +12,16 @@ with input_data.open() as input_file:
         value = int(line.strip())
         evaluated_data.append(value)
 
-def pairwise(iterable):
+def triplewise(iterable:Iterable) -> Iterable:
+    """Need a custom "pairwise" function that generates a tuple
+    with 3 elements instead of 2.
+
+    Args:
+        iterable (Iterable): The input iterable
+
+    Returns:
+        Iterable: The resulting iterable.
+    """
     a, b, c = tee(iterable, 3)
     next(b, None)
     next(c, None)
@@ -22,7 +32,7 @@ def pairwise(iterable):
 
 result = filter(
     lambda p: sum(p[1])>sum(p[0]),
-    pw(pairwise(evaluated_data))
+    pairwise(triplewise(evaluated_data))
 )
 
 count_result = len(list(result))
