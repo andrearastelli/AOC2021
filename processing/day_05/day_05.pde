@@ -27,7 +27,7 @@ void setup()
     int x2 = int(x2y2[0].trim());
     int y2 = int(x2y2[1].trim());
     
-    if (x1 == x2 || y1 == y2)
+    //if (x1 == x2 || y1 == y2)
     {
       max_x = max(max_x, x1, x2);
       max_y = max(max_y, y1, y2);
@@ -38,15 +38,39 @@ void setup()
   
   println(lines.size());
   println("Setup mode ended");
+  
+  // Investigate the points with more than 2 lines overlapping
+  println("Start investigating overlapping points for lines");
+  int total_overlapping = 0;
+  for (int x=0; x<max_x; ++x)
+  {
+    for (int y=0; y<max_y; ++y)
+    {
+      int count_overlaps = 0;
+      for (Line line : lines)
+      {
+        count_overlaps += int(line.overlaps(x, y));
+      }
+      
+      if (count_overlaps >= 2)
+      {
+        ++total_overlapping;
+      }
+    }
+  }
+  println("Total overlapping: ", total_overlapping);
+  println("End investigation.");
 }
 
 void draw()
 {
   background(0);
   
-  ellipse(0, 0, 100, 100);
+  stroke(255, 30);
   for (Line line : lines)
   {
     line.draw();
   }
+  
+  noLoop();
 }
