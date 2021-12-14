@@ -47,10 +47,10 @@ def print_matrix_position(matrix, basin_position, lowest_point):
         for y in range(len(matrix[x])):
             elem = matrix[x][y]
             if (x, y) in basin_position:
-                elem = u"\u001b[92m{:2}\u001b[0m".format(elem)
+                elem = u"\u001b[92m{}\u001b[0m".format(elem)
             if (x, y) == lowest_point:
-                    elem = u"\u001b[93m{:2}\u001b[0m".format(elem)
-            print(f"{elem:2} ", end="")
+                    elem = u"\u001b[93m{}\u001b[0m".format(elem)
+            print(f"{elem}", end="")
         print("")
 
 def find_basins(data_matrix):
@@ -61,112 +61,56 @@ def find_basins(data_matrix):
     # crawl around the coordinates of each low points to look for a basin.
     searched_areas = deque()
     for _, low_point_coordinates in low_points:
-        # inspect the data_matrix for points around the current coordinates
-        basin = set([])
-        search_areas = deque([low_point_coordinates])
 
-        print(f"Starting point: {low_point_coordinates}")
+        # On the first iteration for each low_point_coordinates the basin
+        # is going to contain the low_point_coordinates
+        basin = set([low_point_coordinates])
+
+        # Add the low_point_coordinate to the already searched areas
+        searched_areas.append(low_point_coordinates)
+
+        # Add in the seach areas the 4 points around the low_point_coordinates
+        x, y = low_point_coordinates
+        search_areas = deque()
+        if x-1 >= 0:
+            search_areas.append((x-1,y))
+        if x+1 < len(data_matrix):
+            search_areas.append((x+1, y))
+        if y-1 >= 0:
+            search_areas.append((x, y-1))
+        if y+1 < len(data_matrix[x]):
+            search_areas.append((x, y+1))
 
         while len(search_areas) > 0:
+            # Extract the coordinates to search around of from the search_areas
             coordinates = search_areas.popleft()
+            # Append the current coordinates immediately to the searched areas
             searched_areas.append(coordinates)
 
-            # Look for candidate positions
-            lpx, lpy = coordinates
+            # Extract the coordinates
+            x, y = coordinates
 
-            #   [x-1, y-1](x-1, y  )[x-1, y+1]
-            #   [x  , y-1][x  , y  ][x  , y+1]
-            #   [x+1, y-1][x+1, y  ][x+1, y+1]
-            if lpx > 0 and data_matrix[lpx-1][lpy] != 9:
-                basin.add((lpx-1, lpy))
-                searched_areas.append((lpx-1, lpy))
+            # Check if the current position x is valid
+            if data_matrix[x][y] != 9:
+                basin.add((x, y))
+            else:
+                continue
 
-                #   [x-2, y-1]{x-2, y  }[x-1, y+1]
-                #   {x-1, y-1}(x-1, y  ){x-1, y+1}
-                #   [x  , y-1][x  , y  ][x  , y+1]
-                #   [x+1, y-1][x+1, y  ][x+1, y+1]
-                if lpx-2 >= 0 and data_matrix[lpx-2][lpy] != 9:
-                    search_areas.append((lpx-2, lpy))
-                if lpy-1 >= 0 and data_matrix[lpx-1][lpy-1] != 9:
-                    search_areas.append((lpx-1, lpy-1))
-                if lpy+1 < len(data_matrix[lpx]) and data_matrix[lpx-1][lpy+1] != 9:
-                    search_areas.append((lpx-1, lpy+1))
+            if x-1 >= 0 and data_matrix[x-1][y] != 9:
+                search_areas.append((x-1,y))
+            if x+1 < len(data_matrix) and data_matrix[x+1][y] != 9:
+                search_areas.append((x+1, y))
+            if y-1 >= 0 and data_matrix[x][y-1] != 9:
+                search_areas.append((x, y-1))
+            if y+1 < len(data_matrix[x]) and data_matrix[x][y+1] != 9:
+                search_areas.append((x, y+1))
 
-            #   [x-1, y-1][x-1, y  ][x-1, y+1]
-            #   (x  , y-1)[x  , y  ][x  , y+1]
-            #   [x+1, y-1][x+1, y  ][x+1, y+1]
-            if lpy > 0 and data_matrix[lpx][lpy-1] != 9:
-                basin.add((lpx, lpy-1))
-                searched_areas.append((lpx, lpy-1))
-                if lpy-1 >= 0:
-                    search_areas.append((lpx, lpy-1))
-
-                #   [x-1, y-2]{x-1, y-1}[x-1, y  ][x-1, y+1]
-                #   {x  , y-2}(x  , y-1)[x  , y  ][x  , y+1]
-                #   [x+1, y-2]{x+1, y-1}[x+1, y  ][x+1, y+1]
-                if lpx-1 >= 0 and data_matrix[lpx-1][lpy-1] != 9:
-                    search_areas.append((lpx-1, lpy-1))
-                if lpx+1 < len(data_matrix) and data_matrix[lpx+1][lpy-1]:
-                    search_areas.append((lpx+1, lpy-1))
-                if lpy-2 >= 0 and data_matrix[lpx][lpy-2] != 9:
-                    search_areas.append((lpx, lpy-2))
-
-            #   [x-1, y-1][x-1, y  ][x-1, y+1]
-            #   [x  , y-1][x  , y  ][x  , y+1]
-            #   [x+1, y-1](x+1, y  )[x+1, y+1]
-            if lpx+1 < len(data_matrix) and data_matrix[lpx+1][lpy] != 9:
-                basin.add((lpx+1, lpy))
-                searched_areas.append((lpx+1, lpy))
-
-                #   [x-1, y-1][x-1, y  ][x-1, y+1]
-                #   [x  , y-1][x  , y  ][x  , y+1]
-                #   {x+1, y-1}(x+1, y  ){x+1, y+1}
-                #   [x+2, y-1]{x+2, y  }[x+2, y+1]
-                if lpx+2 < len(data_matrix) and data_matrix[lpx+2][lpy] != 9:
-                    search_areas.append((lpx+2, lpy))
-                if lpy-1 > 0 and data_matrix[lpx+1][lpy-1] != 9:
-                    search_areas.append((lpx+1, lpy-1))
-                if lpy+1 < len(data_matrix[lpx]) and data_matrix[lpx+1][lpy+1] != 9:
-                    search_areas.append((lpx+1, lpy+1))
-
-            #   [x-1, y-1][x-1, y  ][x-1, y+1]
-            #   [x  , y-1][x  , y  ](x  , y+1)
-            #   [x+1, y-1][x+1, y  ][x+1, y+1]
-            if lpy+1 < len(data_matrix[lpx]) and data_matrix[lpx][lpy+1] != 9:
-                basin.add((lpx, lpy+1))
-                searched_areas.append((lpx, lpy+1))
-
-                #   [x-1, y-1][x-1, y  ]{x-1, y+1}[x-1, y+2]
-                #   [x  , y-1][x  , y  ](x  , y+1){x  , y+2}
-                #   [x+1, y-1][x+1, y  ]{x+1, y+1}[x+1, y+2]
-                if lpy+2 < len(data_matrix[lpx]) and data_matrix[lpx][lpy+2] != 9:
-                    search_areas.append((lpx, lpy+2))
-                if lpx-1 >= 0 and data_matrix[lpx-1][lpy+1] != 9:
-                    search_areas.append((lpx-1, lpy+1))
-                if lpx+1 < len(data_matrix) and data_matrix[lpx+1][lpy+1] != 9:
-                    search_areas.append((lpx+1, lpy+1))
-
-
-            # print_matrix_position(data_matrix, basin, coordinates)
-            # print(f"Basin coordinates: {basin}")
-            # print(f"Search areas: {search_areas}")
-            # print(f"Searched areas: {searched_areas}")
-
-            for searched in searched_areas:
-                if searched in search_areas:
-                    search_areas.remove(searched)
-                    # print(f"Removing {searched} from {search_areas}")
-
-            if data_matrix[lpx][lpy] != 9:
-                basin.add(coordinates)
-
-
-        print_matrix_position(data_matrix, basin, low_point_coordinates)
+            for searched_position in searched_areas:
+                if searched_position in search_areas:
+                    search_areas.remove(searched_position)
 
         basins_list.append(basin)
-
-        exit()
-
+        # print_matrix_position(data_matrix, basin, low_point_coordinates)
 
     return basins_list
 
